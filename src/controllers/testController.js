@@ -3,17 +3,18 @@ const testService = require("../services/testService");
 
 exports.runLatencyTest = async (req, res) => {
     try {
-        const { domain } = req.body;
+        const { domain, region } = req.body;
         if (!domain) {
             return res.status(400).json({ error: "Domain is required" });
         }
 
-        const results = await testService.runTest(domain);
+        const results = await testService.runTest(domain, region);
         res.json({ success: true, results });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
 exports.getAllResults = async (req, res) => {
     try {
         const { domain } = req.query;

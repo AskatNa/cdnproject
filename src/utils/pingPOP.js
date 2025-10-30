@@ -1,21 +1,21 @@
 const axios = require("axios");
 
 const POP_SERVERS = [
-    { region: "USA", url: "http://localhost:9001/ping" },
-    { region: "EU", url: "http://localhost:9002/ping" },
-    { region: "Asia", url: "http://localhost:9003/ping" },
+    { region: "US Worker", url: "https://cdn-us-worker.qpert345.workers.dev?target=" },
+    { region: "EU Worker", url: "https://cdn-eu-worker.qpert345.workers.dev?target=" },
+    { region: "Asia Worker", url: "https://cdn-asia-worker.qpert345.workers.dev?target=" }
 ];
 
-async function pingPOP(regionObj) {
+async function pingPOP(regionObj, domain) {
     try {
         const start = Date.now();
-        const res = await axios.get(regionObj.url);
-        const latency = Date.now() - start;
+        const res = await axios.get(regionObj.url + domain);
+        const latency = res.data.latency ?? (Date.now() - start);
 
         return {
-            region: res.data.region,
-            latency,
-            popReported: res.data.latency
+            region: regionObj.region,
+            colo: res.data.colo || "Unknown",
+            latency
         };
     } catch (err) {
         return {
@@ -26,8 +26,8 @@ async function pingPOP(regionObj) {
     }
 }
 
-async function pingAllPOPs() {
-    const promises = POP_SERVERS.map(pop => pingPOP(pop));
+async function pingAllPOPs(domain) {
+    const promises = POP_SERVERS.map(pop => pingPOP(pop, domain));
     return Promise.all(promises);
 }
 
