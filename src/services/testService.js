@@ -1,22 +1,40 @@
 const LatencyResult = require("../models/latencyResult");
-const ping = require("../utils/ping");
+const realPing = require("../utils/realPing");
+const pingAllPOPs = require("../utils/pingPOP");
 
 exports.runTest = async (domain) => {
-    const regions = ["Europe", "USA", "Asia", "Australia"];
-
     const results = [];
 
-    for (let region of regions) {
-        const latency = await ping(domain);
+    // 1. Local real latency test
+    const local = await realPing(domain);
 
-        const record = await LatencyResult.create({
+    await LatencyResult.create({
+        domain,
+        region: "Local-Machine",
+        latency: local.total
+    });
+
+    results.push({ region: "Local-Machine", latency: local.total });
+
+    // 2. CDN PoPs
+    const pops = await pingAllPOPs();
+
+    for (let pop of pops) {
+        await LatencyResult.create({
             domain,
-            region,
-            latency
+            region: pop.region,
+            latency: pop.latency ?? null,
         });
 
-        results.push(record);
+        results.push({
+            region: pop.region,
+            latency: pop.latency ?? null
+        });
     }
 
-    return results;
+    return {
+        domain,
+        results,
+        bestRoute: results.filter(r => r.latency !== null).sort((a, b) => a.latency - b.latency)[0]
+    };
 };
