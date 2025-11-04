@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CDN Heatmap Analyzer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --orange: #EA5B2B;
+      --yellow: #EDBD21;
+      --green: #3AA55B;
+      --blue: #1B9BD7;
+      --gray: #B3B3B3;
+      --dark-gray: #313741;
+      --white: #FFFFFF;
+      --background: #1B202A;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: var(--background);
+      color: var(--white);
+    }
+
+    /* Navbar */
+    nav {
+      background: var(--dark-gray);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 40px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    nav .logo {
+      color: var(--yellow);
+      font-weight: bold;
+      font-size: 1.3em;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: var(--white);
+      font-weight: 500;
+      transition: 0.2s;
+    }
+
+    nav ul li a:hover {
+      color: var(--yellow);
+    }
+
+    nav ul li a.active {
+      color: var(--yellow);
+      text-decoration: underline;
+    }
+
+    header {
+      text-align: center;
+      margin: 30px 0 10px 0;
+    }
+
+    header h1 {
+      color: var(--yellow);
+      font-size: 2rem;
+      margin-bottom: 5px;
+    }
+
+    header p {
+      color: var(--gray);
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      padding: 0 20px 40px 20px;
+    }
+
+    .sidebar {
+      background: var(--dark-gray);
+      padding: 20px;
+      border-radius: 12px;
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      height: fit-content;
+    }
+
+    label {
+      font-weight: bold;
+      color: var(--yellow);
+    }
+
+    input, select {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      background-color: #242A36;
+      color: var(--white);
+      width: 100%;
+    }
+
+    button {
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: var(--blue);
+      color: var(--white);
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: var(--green);
+    }
+
+    #map {
+      flex: 1;
+      height: 500px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .summary-cards {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: var(--dark-gray);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      min-width: 220px;
+    }
+
+    .card h3 {
+      color: var(--yellow);
+      margin: 0;
+    }
+
+    .card p {
+      color: var(--white);
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Навбар -->
+<nav>
+  <div class="logo">🌐 CDN Heatmap Analyzer</div>
+  <ul>
+    <li><a href="cdnDashboard.html" class="active">Analyzer</a></li>
+    <li><a href="cdnDashboard.html">Dashboard</a></li>
+    <li><a href="comparison.html">Comparison</a></li>
+  </ul>
+</nav>
+
+<header>
+  <p>Visualize latency across global edge POPs</p>
+</header>
+
+<div class="container">
+  <div class="sidebar">
+    <label for="domain">Domain:</label>
+    <input id="domain" type="text" placeholder="Enter domain..." />
+
+    <label for="region">Region:</label>
+    <select id="region">
+      <option value="Global">Global</option>
+      <option value="US Worker">US Worker</option>
+      <option value="EU Worker">EU Worker</option>
+      <option value="Asia Worker">Asia Worker</option>
+      <option value="Japan">Japan</option>
+      <option value="UAE">UAE</option>
+      <option value="Brazil">Brazil</option>
+    </select>
+
+    <label for="measurement">Measurement:</label>
+    <select id="measurement">
+      <option>Latency</option>
+    </select>
+
+    <button id="runTest">Run Test</button>
+  </div>
+
+  <div style="flex:1;">
+    <div id="map"></div>
+
+    <div class="summary-cards" id="summary" style="display:none;">
+      <div class="card">
+        <h3>Best Route</h3>
+        <p id="bestRoute">-</p>
+      </div>
+      <div class="card" id="fastestCard">
+        <h3>Fastest Region</h3>
+        <p id="fastestRegion">-</p>
+      </div>
+      <div class="card" id="slowestCard">
+        <h3>Slowest Region</h3>
+        <p id="slowestRegion">-</p>
+      </div>
+      <div class="card" id="avgCard">
+        <h3>Average Latency</h3>
+        <p id="avgLatency">-</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const REGION_COORDS = {
+    "US Worker": [37.0902, -95.7129],
+    "EU Worker": [50.1109, 8.6821],
+    "Asia Worker": [22.3193, 114.1694],
+    "Japan": [35.6762, 139.6503],
+    "UAE": [25.276987, 55.296249],
+    "Brazil": [-23.5505, -46.6333]
+  };
+
+  let map = L.map("map").setView([20, 0], 2);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
+
+  let markers = [];
+
+  function getColor(latency) {
+    if (latency <= 100) return "#3AA55B";
+    if (latency <= 200) return "#EDBD21";
+    return "#EA5B2B";
+  }
+
+  async function runTest() {
+    const domain = document.getElementById("domain").value.trim();
+    const selectedRegion = document.getElementById("region").value;
+    if (!domain) {
+      alert("Please enter a domain name");
+      return;
+    }
+
+    const response = await fetch("http://localhost:5000/api/tests/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domain })
+    });
+
+    const data = await response.json();
+    if (!data.success) {
+      alert("Error: " + (data.error || "Unknown error"));
+      return;
+    }
+
+    const { results, bestRoute, avgLatency } = data.results;
+    const filtered =
+            selectedRegion === "Global"
+                    ? results
+                    : results.filter(r => r.region === selectedRegion);
+
+    // очистка карты
+    markers.forEach(m => m.remove());
+    markers = [];
+
+    filtered.forEach(r => {
+      const coords = REGION_COORDS[r.region];
+      if (!coords) return;
+      const color = getColor(r.latency);
+      const marker = L.circleMarker(coords, {
+        radius: 10,
+        color,
+        fillColor: color,
+        fillOpacity: 0.8
+      })
+              .addTo(map)
+              .bindPopup(`<b>${r.region}</b><br>Latency: ${r.latency ?? "N/A"} ms`);
+      markers.push(marker);
+    });
+
+    document.getElementById("summary").style.display = "flex";
+    document.getElementById("bestRoute").textContent =
+            bestRoute ? `${bestRoute.region} (${bestRoute.latency} ms)` : "N/A";
+
+    const avgCard = document.getElementById("avgCard");
+    const fastestCard = document.getElementById("fastestCard");
+    const slowestCard = document.getElementById("slowestCard");
+
+    if (selectedRegion === "Global") {
+      avgCard.style.display = "block";
+      fastestCard.style.display = "block";
+      slowestCard.style.display = "block";
+
+      const valid = results.filter(r => r.latency);
+      const fastest = valid.length ? valid.reduce((a, b) => (a.latency < b.latency ? a : b)) : null;
+      const slowest = valid.length ? valid.reduce((a, b) => (a.latency > b.latency ? a : b)) : null;
+
+      document.getElementById("avgLatency").textContent =
+              avgLatency ? avgLatency + " ms" : "N/A";
+      document.getElementById("fastestRegion").textContent =
+              fastest ? `${fastest.region} (${fastest.latency} ms)` : "N/A";
+      document.getElementById("slowestRegion").textContent =
+              slowest ? `${slowest.region} (${slowest.latency} ms)` : "N/A";
+    } else {
+      avgCard.style.display = "none";
+      fastestCard.style.display = "none";
+      slowestCard.style.display = "none";
+    }
+  }
+
+  document.getElementById("runTest").addEventListener("click", runTest);
+</script>
+</body>
+</html>
