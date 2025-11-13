@@ -269,12 +269,13 @@
     }
 
     const { results, bestRoute, avgLatency } = data.results;
-    const filtered =
-            selectedRegion === "Global"
-                    ? results
-                    : results.filter(r => r.region === selectedRegion);
 
+    // Фильтруем по выбранному региону
+    const filtered = selectedRegion === "Global"
+            ? results
+            : results.filter(r => r.region === selectedRegion);
 
+    // Убираем старые маркеры
     markers.forEach(m => m.remove());
     markers = [];
 
@@ -293,15 +294,14 @@
       markers.push(marker);
     });
 
-    document.getElementById("summary").style.display = "flex";
-    document.getElementById("bestRoute").textContent =
-            bestRoute ? `${bestRoute.region} (${bestRoute.latency} ms)` : "N/A";
-
+    const summary = document.getElementById("summary");
     const avgCard = document.getElementById("avgCard");
     const fastestCard = document.getElementById("fastestCard");
     const slowestCard = document.getElementById("slowestCard");
 
     if (selectedRegion === "Global") {
+      // Показываем все блоки
+      summary.style.display = "flex";
       avgCard.style.display = "block";
       fastestCard.style.display = "block";
       slowestCard.style.display = "block";
@@ -310,20 +310,29 @@
       const fastest = valid.length ? valid.reduce((a, b) => (a.latency < b.latency ? a : b)) : null;
       const slowest = valid.length ? valid.reduce((a, b) => (a.latency > b.latency ? a : b)) : null;
 
+      document.getElementById("bestRoute").textContent =
+              bestRoute ? `${bestRoute.region} (${bestRoute.latency} ms)` : "N/A";
       document.getElementById("avgLatency").textContent =
               avgLatency ? avgLatency + " ms" : "N/A";
       document.getElementById("fastestRegion").textContent =
               fastest ? `${fastest.region} (${fastest.latency} ms)` : "N/A";
       document.getElementById("slowestRegion").textContent =
               slowest ? `${slowest.region} (${slowest.latency} ms)` : "N/A";
+
     } else {
+      // Если выбран один регион, показываем только latency
+      summary.style.display = "flex";
       avgCard.style.display = "none";
       fastestCard.style.display = "none";
       slowestCard.style.display = "none";
+
+      document.getElementById("bestRoute").textContent =
+              filtered.length ? `${filtered[0].region}: ${filtered[0].latency ?? "N/A"} ms` : "N/A";
     }
   }
 
   document.getElementById("runTest").addEventListener("click", runTest);
 </script>
+
 </body>
 </html>
