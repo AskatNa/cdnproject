@@ -4,243 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CDN Comparison</title>
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
     <style>
         :root {
-            --orange: #EA5B2B;
-            --yellow: #EDBD21;
-            --green: #3AA55B;
-            --blue: #1B9BD7;
-            --gray: #B3B3B3;
-            --dark-gray: #2A2F38;
-            --bg: #1B202A;
-            --white: #FFFFFF;
+            --orange:#EA5B2B; --yellow:#EDBD21; --green:#3AA55B; --blue:#1B9BD7;
+            --gray:#B3B3B3; --dark-gray:#2A2F38; --bg:#1B202A; --white:#FFFFFF;
         }
-
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--white);
-        }
-
-        nav {
-            background-color: var(--dark-gray);
-            padding: 12px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        nav .brand {
-            color: var(--yellow);
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        nav a {
-            color: var(--white);
-            text-decoration: none;
-            margin-left: 20px;
-            transition: color 0.2s;
-        }
-
-        nav a:hover {
-            color: var(--blue);
-        }
-
-        .container {
-            display: flex;
-            gap: 30px;
-            padding: 20px 40px;
-        }
-
-        .sidebar {
-            background: var(--dark-gray);
-            padding: 20px;
-            border-radius: 12px;
-            width: 320px;
-            height: fit-content;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        .sidebar h2 {
-            color: var(--yellow);
-            margin-top: 0;
-        }
-
-        .sidebar label {
-            display: block;
-            margin-top: 10px;
-            color: var(--gray);
-        }
-
-        .sidebar input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            margin-top: 5px;
-            background: #3A3F4A;
-            color: var(--white);
-        }
-
-        .sidebar button {
-            margin-top: 15px;
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            background: var(--blue);
-            color: var(--white);
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .sidebar button:hover {
-            background: var(--green);
-        }
-
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .map-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .map-box {
-            flex: 1;
-            height: 300px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-            min-width: 380px;
-        }
-
-        .map-label {
-            text-align: center;
-            margin-top: 8px;
-            font-size: 1rem;
-            color: var(--yellow);
-            font-weight: 500;
-        }
-
-        .summary {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background: var(--dark-gray);
-            padding: 15px 25px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-            min-width: 200px;
-        }
-
-        .card h3 {
-            color: var(--yellow);
-            margin-bottom: 5px;
-        }
-
-        table {
-            width: 80%;
-            border-collapse: collapse;
-            background: var(--dark-gray);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-        }
-
-        th {
-            background-color: var(--orange);
-            color: var(--white);
-            text-transform: uppercase;
-        }
-
-        tr:nth-child(even) {
-            background-color: #242A36;
-        }
-
-        tr:hover {
-            background-color: #2E3543;
-        }
-
-        td.good {
-            color: var(--green);
-        }
-
-        td.bad {
-            color: var(--orange);
-        }
+        body { margin:0; font-family:"Segoe UI",Arial,sans-serif; background-color:var(--bg); color:var(--white); }
+        nav { background-color:var(--dark-gray); padding:12px 40px; display:flex; justify-content:space-between; align-items:center; }
+        nav .brand { color:var(--yellow); font-size:1.2rem; font-weight:bold; }
+        nav a { color:var(--white); text-decoration:none; margin-left:20px; transition:color 0.2s; }
+        nav a:hover { color:var(--blue); }
+        .container { display:flex; gap:30px; padding:20px 40px; }
+        .sidebar { background:var(--dark-gray); padding:20px; border-radius:12px; width:320px; height:fit-content; box-shadow:0 4px 10px rgba(0,0,0,0.3); }
+        .sidebar h2 { color:var(--yellow); margin-top:0; }
+        .sidebar label { display:block; margin-top:10px; color:var(--gray); }
+        .sidebar input, select { width:100%; padding:10px; border-radius:8px; border:none; margin-top:5px; background:#3A3F4A; color:var(--white); }
+        .sidebar button { margin-top:15px; width:100%; padding:10px; border:none; border-radius:8px; background:var(--blue); color:var(--white); font-weight:bold; cursor:pointer; transition:0.2s; }
+        .sidebar button:hover { background:var(--green); }
+        .main { flex:1; display:flex; flex-direction:column; align-items:center; }
+        .map-container { display:flex; justify-content:center; gap:20px; margin-bottom:20px; }
+        .map-box { flex:1; height:300px; border-radius:12px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.4); min-width:380px; }
+        .map-label { text-align:center; margin-top:8px; font-size:1rem; color:var(--yellow); font-weight:500; }
+        .summary { display:flex; justify-content:center; gap:20px; margin-bottom:20px; }
+        .card { background:var(--dark-gray); padding:15px 25px; border-radius:10px; text-align:center; box-shadow:0 3px 8px rgba(0,0,0,0.3); min-width:200px; }
+        .card h3 { color:var(--yellow); margin-bottom:5px; }
+        table { width:80%; border-collapse:collapse; background:var(--dark-gray); border-radius:12px; overflow:hidden; }
+        th, td { padding:12px; text-align:left; }
+        th { background-color:var(--orange); color:var(--white); text-transform:uppercase; }
+        tr:nth-child(even) { background-color:#242A36; }
+        tr:hover { background-color:#2E3543; }
+        td.good { color:var(--green); }
+        td.bad { color:var(--orange); }
     </style>
 </head>
 <body>
 <nav>
     <div class="brand">🌐 CDN Heatmap Analyzer</div>
-    <div>
-        <a href="cdnDashboard.html">Dashboard</a>
-        <a href="cdnComparison.html">Comparison</a>
-    </div>
+    <div><a href="cdnDashboard.html">Dashboard</a><a href="cdnComparison.html">Comparison</a></div>
 </nav>
 
 <div class="container">
     <div class="sidebar">
         <h2>Compare Two CDNs</h2>
-        <label for="domain1">Domain 1</label>
-        <input id="domain1" placeholder="example.com">
-
-        <label for="domain2">Domain 2</label>
-        <input id="domain2" placeholder="example.com">
-
+        <label for="domain1">Domain 1</label><input id="domain1" placeholder="example.com">
+        <label for="domain2">Domain 2</label><input id="domain2" placeholder="example.com">
+        <label for="measurement">Measurement</label>
+        <select id="measurement">
+            <option value="latency">Latency</option>
+            <option value="ttfb">TTFB</option>
+            <option value="jitter">Jitter</option>
+        </select>
         <button onclick="runComparison()">Compare</button>
     </div>
 
     <div class="main">
         <div class="map-container" id="maps" style="display:none;">
-            <div>
-                <div id="map1" class="map-box"></div>
-                <div class="map-label" id="domain1Label">-</div>
-            </div>
-            <div>
-                <div id="map2" class="map-box"></div>
-                <div class="map-label" id="domain2Label">-</div>
-            </div>
+            <div><div id="map1" class="map-box"></div><div class="map-label" id="domain1Label">-</div></div>
+            <div><div id="map2" class="map-box"></div><div class="map-label" id="domain2Label">-</div></div>
         </div>
 
         <div class="summary" id="summary" style="display:none;">
             <div class="card"><h3>Faster CDN</h3><p id="fasterCDN">-</p></div>
-            <div class="card"><h3>Avg Latency (CDN1)</h3><p id="avg1">-</p></div>
-            <div class="card"><h3>Avg Latency (CDN2)</h3><p id="avg2">-</p></div>
+            <div class="card"><h3>Avg CDN1</h3><p id="avg1">-</p></div>
+            <div class="card"><h3>Avg CDN2</h3><p id="avg2">-</p></div>
         </div>
 
         <table id="comparisonTable" style="display:none;">
-            <thead>
-            <tr>
-                <th>Region</th>
-                <th>CDN1</th>
-                <th>CDN2</th>
-                <th>Difference</th>
-            </tr>
-            </thead>
+            <thead><tr><th>Region</th><th>CDN1</th><th>CDN2</th><th>Difference</th></tr></thead>
             <tbody></tbody>
         </table>
     </div>
@@ -248,127 +80,83 @@
 
 <script>
     const REGION_COORDS = {
-        "US Worker": [37.0902, -95.7129],
-        "EU Worker": [50.1109, 8.6821],
-        "Asia Worker": [22.3193, 114.1694],
-        "Japan": [35.6762, 139.6503],
-        "UAE": [25.276987, 55.296249],
-        "Brazil": [-23.5505, -46.6333]
+        "US Worker":[37.0902,-95.7129],"EU Worker":[50.1109,8.6821],"Asia Worker":[22.3193,114.1694],
+        "Japan":[35.6762,139.6503],"UAE":[25.276987,55.296249],"Brazil":[-23.5505,-46.6333]
     };
 
-    let map1, map2, markers1 = [], markers2 = [];
+    let map1,map2,markers1=[],markers2=[];
 
-    function getColor(latency) {
-        if (latency == null) return "#B3B3B3";
-        if (latency <= 100) return "#3AA55B";
-        if (latency <= 200) return "#EDBD21";
-        return "#EA5B2B";
+    function getColor(value,type="latency"){
+        if(value==null)return "#B3B3B3";
+        if(type==="latency"||type==="ttfb"){if(value<=100)return "#3AA55B";if(value<=200)return "#EDBD21";return "#EA5B2B";}
+        if(type==="jitter"){if(value<=10)return "#3AA55B";if(value<=30)return "#EDBD21";return "#EA5B2B";}
+        return "#B3B3B3";
     }
 
-    function renderMap(map, markers, results) {
-        if (!map) return;
-        markers.forEach(m => m.remove());
-        results.forEach(r => {
+    function renderMap(map,markers,results,measurement){
+        markers.forEach(m=>m.remove());
+        results.forEach(r=>{
             const coords = REGION_COORDS[r.region];
-            if (!coords) return;
-            const color = getColor(r.latency);
-            const marker = L.circleMarker(coords, {
-                radius: 8,
-                color,
-                fillColor: color,
-                fillOpacity: 0.8
-            })
+            if(!coords)return;
+            const value = r[measurement];
+            const color = getColor(value,measurement);
+            const marker = L.circleMarker(coords,{radius:8,color,fillColor:color,fillOpacity:0.8})
                 .addTo(map)
-                .bindPopup(`<b>${r.region}</b><br>${r.latency} ms`);
+                .bindPopup(`<b>${r.region}</b><br>${measurement.toUpperCase()}: ${value ?? "N/A"} ms<br>Cache Hit: ${r.cacheHit ?? false}`);
             markers.push(marker);
         });
     }
 
-    async function runComparison() {
+    async function runComparison(){
         const domain1 = document.getElementById("domain1").value.trim();
         const domain2 = document.getElementById("domain2").value.trim();
-        if (!domain1 || !domain2) {
-            alert("Please enter both domains");
-            return;
-        }
+        const measurement = document.getElementById("measurement").value;
+        if(!domain1||!domain2){alert("Please enter both domains");return;}
+        document.getElementById("domain1Label").textContent=domain1;
+        document.getElementById("domain2Label").textContent=domain2;
 
-        document.getElementById("domain1Label").textContent = domain1;
-        document.getElementById("domain2Label").textContent = domain2;
-
-        const [res1, res2] = await Promise.all([
-            fetch("http://localhost:5000/api/tests/run", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ domain: domain1 })
-            }),
-            fetch("http://localhost:5000/api/tests/run", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ domain: domain2 })
-            })
+        const [res1,res2] = await Promise.all([
+            fetch("http://localhost:5000/api/tests/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({domain:domain1})}),
+            fetch("http://localhost:5000/api/tests/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({domain:domain2})})
         ]);
 
-        const data1 = await res1.json();
-        const data2 = await res2.json();
+        const data1=await res1.json();
+        const data2=await res2.json();
+        if(!data1.success||!data2.success){alert("Error fetching data");return;}
 
-        if (!data1.success || !data2.success) {
-            alert("Error fetching data");
-            return;
-        }
+        const results1=data1.results.results;
+        const results2=data2.results.results;
+        const avg1=data1.results.avgLatency;
+        const avg2=data2.results.avgLatency;
 
-        const results1 = data1.results.results;
-        const results2 = data2.results.results;
-        const avg1 = data1.results.avgLatency;
-        const avg2 = data2.results.avgLatency;
+        document.getElementById("maps").style.display="flex";
+        document.getElementById("summary").style.display="flex";
+        document.getElementById("comparisonTable").style.display="table";
 
-        document.getElementById("maps").style.display = "flex";
-        document.getElementById("summary").style.display = "flex";
-        document.getElementById("comparisonTable").style.display = "table";
+        if(!map1){map1=L.map("map1").setView([20,0],2);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors"}).addTo(map1);}
+        if(!map2){map2=L.map("map2").setView([20,0],2);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors"}).addTo(map2);}
 
-        if (!map1) {
-            map1 = L.map("map1").setView([20, 0], 2);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map1);
-        }
-        if (!map2) {
-            map2 = L.map("map2").setView([20, 0], 2);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map2);
-        }
+        renderMap(map1,markers1,results1,measurement);
+        renderMap(map2,markers2,results2,measurement);
 
-        renderMap(map1, markers1, results1);
-        renderMap(map2, markers2, results2);
-
-        document.getElementById("avg1").textContent = avg1 + " ms";
-        document.getElementById("avg2").textContent = avg2 + " ms";
-        document.getElementById("fasterCDN").textContent =
-            avg1 < avg2 ? domain1 : avg2 < avg1 ? domain2 : "Equal";
-
-        const tbody = document.querySelector("#comparisonTable tbody");
-        tbody.innerHTML = "";
-
-        results1.forEach(r1 => {
-            const r2 = results2.find(r => r.region === r1.region);
-            if (!r2) return;
-
-            const latency1 = r1.latency != null ? r1.latency + " ms" : "N/A";
-            const latency2 = r2.latency != null ? r2.latency + " ms" : "N/A";
-            const diff =
-                r1.latency != null && r2.latency != null
-                    ? Math.abs(r1.latency - r2.latency) + " ms"
-                    : "N/A";
-
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-        <td>${r1.region}</td>
-        <td>${latency1}</td>
-        <td>${latency2}</td>
-        <td>${diff}</td>
-    `;
+        const tbody=document.querySelector("#comparisonTable tbody");
+        tbody.innerHTML="";
+        results1.forEach(r1=>{
+            const r2=results2.find(r=>r.region===r1.region);
+            if(!r2)return;
+            const val1=r1[measurement]!=null?r1[measurement]+" ms":"N/A";
+            const val2=r2[measurement]!=null?r2[measurement]+" ms":"N/A";
+            const diff=r1[measurement]!=null&&r2[measurement]!=null?Math.abs(r1[measurement]-r2[measurement])+" ms":"N/A";
+            const tr=document.createElement("tr");
+            tr.innerHTML=`<td>${r1.region}</td><td>${val1} ${r1.cacheHit!=null?`(Cache:${r1.cacheHit})`:""}</td>
+    <td>${val2} ${r2.cacheHit!=null?`(Cache:${r2.cacheHit})`:""}</td><td>${diff}</td>`;
             tbody.appendChild(tr);
         });
 
+        document.getElementById("avg1").textContent=avg1+" ms";
+        document.getElementById("avg2").textContent=avg2+" ms";
+        document.getElementById("fasterCDN").textContent=avg1<avg2?domain1:domain2;
     }
-
-
 </script>
 </body>
 </html>

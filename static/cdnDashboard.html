@@ -195,7 +195,9 @@
 
     <label for="measurement">Measurement:</label>
     <select id="measurement">
-      <option>Latency</option>
+      <option value="latency">Latency</option>
+      <option value="ttfb">TTFB</option>
+      <option value="jitter">Jitter</option>
     </select>
 
     <button id="runTest">Run Test</button>
@@ -218,7 +220,7 @@
         <p id="slowestRegion">-</p>
       </div>
       <div class="card" id="avgCard">
-        <h3>Average Latency</h3>
+        <h3>Average</h3>
         <p id="avgLatency">-</p>
       </div>
     </div>
@@ -242,15 +244,32 @@
 
   let markers = [];
 
-  function getColor(latency) {
-    if (latency <= 100) return "#3AA55B";
-    if (latency <= 200) return "#EDBD21";
-    return "#EA5B2B";
+  function getColor(value, type = "latency") {
+    if (value == null) return "#B3B3B3";
+
+    if (type === "latency" || type === "ttfb") {
+      if (value <= 100) return "#3AA55B";
+      if (value <= 200) return "#EDBD21";
+      return "#EA5B2B";
+    }
+    if (type === "jitter") {
+      if (value <= 10) return "#3AA55B";
+      if (value <= 30) return "#EDBD21";
+      return "#EA5B2B";
+    }
+    return "#B3B3B3";
   }
 
+
   async function runTest() {
-    const domain = document.getElementById("domain").value.trim();
+    let domain = document.getElementById("domain").value.trim();
+    domain = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    if (!domain) {
+      alert("Please enter a valid domain (example.com)");
+      return;
+    }
     const selectedRegion = document.getElementById("region").value;
+    const measurement = document.getElementById("measurement").value; // "latency", "ttfb" или "jitter"
     if (!domain) {
       alert("Please enter a domain name");
       return;
@@ -268,7 +287,7 @@
       return;
     }
 
-    const { results, bestRoute, avgLatency } = data.results;
+    const { results, bestRoute, avgLatency,avgTTFB, avgJitter } = data.results;
 
     // Фильтруем по выбранному региону
     const filtered = selectedRegion === "Global"
@@ -282,7 +301,8 @@
     filtered.forEach(r => {
       const coords = REGION_COORDS[r.region];
       if (!coords) return;
-      const color = getColor(r.latency);
+      const value = r[measurement];
+      const color = getColor(value,measurement);
       const marker = L.circleMarker(coords, {
         radius: 10,
         color,
@@ -290,7 +310,7 @@
         fillOpacity: 0.8
       })
               .addTo(map)
-              .bindPopup(`<b>${r.region}</b><br>Latency: ${r.latency ?? "N/A"} ms`);
+              .bindPopup(`<b>${r.region}</b><br>${measurement.toUpperCase()}: ${value ?? "N/A"} ms`);
       markers.push(marker);
     });
 
@@ -306,18 +326,25 @@
       fastestCard.style.display = "block";
       slowestCard.style.display = "block";
 
-      const valid = results.filter(r => r.latency);
-      const fastest = valid.length ? valid.reduce((a, b) => (a.latency < b.latency ? a : b)) : null;
-      const slowest = valid.length ? valid.reduce((a, b) => (a.latency > b.latency ? a : b)) : null;
-
+      const valid = results.filter(r => r[measurement] != null);
+      const fastest = valid.length ? valid.reduce((a, b) => (a[measurement]<b[measurement]?a:b)) : null;
+      const slowest = valid.length ? valid.reduce((a, b) => (a[measurement]>b[measurement]?a:b)) : null;
+      // Берем среднее по выбранной метрике
+      // let avgValue;
+      // if (measurement === "latency") avgValue = avgLatency;
+      // if (measurement === "ttfb") avgValue = avgTTFB;
+      // if (measurement === "jitter") avgValue = avgJitter;
+      const avgValue = valid.length
+              ? Number((valid.reduce((sum, r) => sum + r[measurement], 0) / valid.length).toFixed(2))
+              : null;
       document.getElementById("bestRoute").textContent =
-              bestRoute ? `${bestRoute.region} (${bestRoute.latency} ms)` : "N/A";
+              bestRoute ? `${bestRoute.region} (${bestRoute[measurement]} ms)` : "N/A";
       document.getElementById("avgLatency").textContent =
-              avgLatency ? avgLatency + " ms" : "N/A";
+              avgValue ? avgValue + " ms" : "N/A";
       document.getElementById("fastestRegion").textContent =
-              fastest ? `${fastest.region} (${fastest.latency} ms)` : "N/A";
+              fastest ? `${fastest.region} (${fastest[measurement]} ms)` : "N/A";
       document.getElementById("slowestRegion").textContent =
-              slowest ? `${slowest.region} (${slowest.latency} ms)` : "N/A";
+              slowest ? `${slowest.region} (${slowest[measurement]} ms)` : "N/A";
 
     } else {
       // Если выбран один регион, показываем только latency
@@ -327,7 +354,7 @@
       slowestCard.style.display = "none";
 
       document.getElementById("bestRoute").textContent =
-              filtered.length ? `${filtered[0].region}: ${filtered[0].latency ?? "N/A"} ms` : "N/A";
+              filtered.length ? `${filtered[0].region}: ${filtered[0][measurement] ?? "N/A"} ms` : "N/A";
     }
   }
 

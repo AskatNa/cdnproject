@@ -16,7 +16,10 @@ exports.runLatencyTest = async (req, res) => {
                 await LatencyResult.create({
                     domain,
                     region: r.region,
-                    latency: r.latency
+                    latency: r.latency,
+                    ttfb: r.ttfb,
+                    jitter: r.jitter,
+                    //cacheHit: r.cacheHit
                 });
             }
         }

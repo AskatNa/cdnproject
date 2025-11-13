@@ -25,15 +25,17 @@ exports.runTest = async (domain, region = "Global") => {
         throw new Error("Invalid domain format");
     }
 
-    const pops = await pingAllPOPs(domain);
+    const popsData = await pingAllPOPs(domain);
 
     const filteredPOPs = region === "Global"
-        ? pops
-        : pops.filter(p => p.region.toLowerCase().includes(region.toLowerCase()));
+        ? popsData.results
+        : popsData.results.filter(p => p.region.toLowerCase().includes(region.toLowerCase()));
 
     const results = filteredPOPs.map(p => ({
         region: p.region,
         latency: p.latency ?? null,
+        ttfb: p.ttfb ?? null,
+        jitter: p.jitter ?? null,
         coords: p.coords,
         color: getColorByLatency(p.latency)
     }));
