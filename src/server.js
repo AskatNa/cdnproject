@@ -1,6 +1,8 @@
 require("dotenv").config();
 const app = require("./app");
 const connectDB = require("./configs/mongoConnection");
+const {static} = require("express");
+app.use(static("static"));
 
 const PORT = process.env.PORT || 5000;
 

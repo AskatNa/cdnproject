@@ -164,11 +164,10 @@
 </head>
 <body>
 
-<!-- Навбар -->
+
 <nav>
   <div class="logo">🌐 CDN Heatmap Analyzer</div>
   <ul>
-    <li><a href="cdnDashboard.html" class="active">Analyzer</a></li>
     <li><a href="cdnDashboard.html">Dashboard</a></li>
     <li><a href="comparison.html">Comparison</a></li>
   </ul>
@@ -275,7 +274,7 @@
                     ? results
                     : results.filter(r => r.region === selectedRegion);
 
-    // очистка карты
+
     markers.forEach(m => m.remove());
     markers = [];
 

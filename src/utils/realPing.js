@@ -1,6 +1,7 @@
 const dns = require("dns").promises;
 const net = require("net");
 const ping = require("ping");
+const axios = require("axios");
 
 async function tcpPing(host, port = 443, timeout = 1500) {
     return new Promise((resolve) => {
@@ -19,29 +20,47 @@ async function tcpPing(host, port = 443, timeout = 1500) {
             resolve(null);
         });
 
-        socket.once("error", () => {
-            resolve(null);
-        });
+        socket.once("error", () => resolve(null));
 
         socket.connect(port, host);
     });
 }
 
+async function httpFallback(domain) {
+    const start = Date.now();
+    try {
+        await axios.head("https://" + domain, { timeout: 1500 });
+        return Date.now() - start;
+    } catch {
+        return null;
+    }
+}
+
 async function realPing(domain) {
     try {
-        const addresses = await dns.resolve(domain);
-        const ip = addresses[0];
+        let ip;
+        try {
+            const addresses = await dns.resolve(domain);
+            ip = addresses[0];
+        } catch {
+            ip = null;
+        }
 
-        const icmp = await ping.promise.probe(ip);
-        const tcp = await tcpPing(ip);
+        const icmp = ip ? await ping.promise.probe(ip) : { alive: false, time: "unknown" };
+        const tcp = ip ? await tcpPing(ip) : null;
+
+        let finalLatency;
+        if (icmp.time !== "unknown") finalLatency = Number(icmp.time);
+        else if (tcp !== null) finalLatency = tcp;
+        else finalLatency = await httpFallback(domain);
 
         return {
             domain,
             ip,
-            total: icmp.time === "unknown" ? tcp : Number(icmp.time),
+            total: finalLatency,
             icmp_latency_ms: icmp.time === "unknown" ? null : Number(icmp.time),
             tcp_latency_ms: tcp,
-            reachable: icmp.alive || tcp !== null
+            reachable: !!finalLatency
         };
     } catch (err) {
         return { domain, error: err.message };

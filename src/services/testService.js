@@ -1,36 +1,57 @@
-const LatencyResult = require("../models/latencyResult");
-const realPing = require("../utils/realPing");
+// services/testService.js
 const pingAllPOPs = require("../utils/pingPOP");
 
-exports.runTest = async (domain) => {
-    const results = [];
+const COLORS = {
+    low: "#3AA55B",
+    medium: "#EDBD21",
+    high: "#EA5B2B",
+    neutral: "#B3B3B3"
+};
 
-    const local = await realPing(domain);
-    await LatencyResult.create({
-        domain,
-        region: "Local-Machine",
-        latency: local.total
-    });
-    results.push({ region: "Local-Machine", latency: local.total });
+function isValidDomain(domain) {
+    const regex = /^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/;
+    return regex.test(domain);
+}
+
+function getColorByLatency(latency) {
+    if (latency == null) return COLORS.neutral;
+    if (latency < 100) return COLORS.low;
+    if (latency < 250) return COLORS.medium;
+    return COLORS.high;
+}
+
+exports.runTest = async (domain, region = "Global") => {
+    if (!isValidDomain(domain)) {
+        throw new Error("Invalid domain format");
+    }
 
     const pops = await pingAllPOPs(domain);
 
-    for (let pop of pops) {
-        await LatencyResult.create({
-            domain,
-            region: pop.region,
-            latency: pop.latency ?? null
-        });
+    const filteredPOPs = region === "Global"
+        ? pops
+        : pops.filter(p => p.region.toLowerCase().includes(region.toLowerCase()));
 
-        results.push({
-            region: pop.region,
-            latency: pop.latency ?? null
-        });
-    }
+    const results = filteredPOPs.map(p => ({
+        region: p.region,
+        latency: p.latency ?? null,
+        coords: p.coords,
+        color: getColorByLatency(p.latency)
+    }));
 
-    const bestRoute = results
-        .filter(r => r.latency !== null)
-        .sort((a, b) => a.latency - b.latency)[0];
+    const valid = results.filter(r => typeof r.latency === "number" && r.latency > 0);
+    const avgLatency = valid.length
+        ? Number((valid.reduce((sum, r) => sum + r.latency, 0) / valid.length).toFixed(2))
+        : null;
 
-    return { domain, results, bestRoute };
+    const bestRoute = valid.length
+        ? valid.reduce((a, b) => (a.latency < b.latency ? a : b))
+        : null;
+
+    return {
+        domain,
+        results,
+        bestRoute: bestRoute ? { ...bestRoute, color: getColorByLatency(bestRoute.latency) } : null,
+        avgLatency,
+        avgColor: getColorByLatency(avgLatency)
+    };
 };

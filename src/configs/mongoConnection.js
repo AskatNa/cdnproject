@@ -1,8 +1,9 @@
+//configs/mongoConnection.js
 const mongoose = require("mongoose");
 
 async function connectDB() {
     try {
-        const uri = process.env.MONGO_URI || process.env.MONGO_URL;
+        const uri = process.env.MONGO_URI;
         if (!uri) throw new Error("MONGO_URI missing");
 
         await mongoose.connect(uri);
