@@ -11,6 +11,15 @@ exports.runLatencyTest = async (req, res) => {
         }
 
         const results = await testService.runTest(domain, region);
+        for (const r of results.results) {
+            if (r.latency) {
+                await LatencyResult.create({
+                    domain,
+                    region: r.region,
+                    latency: r.latency
+                });
+            }
+        }
         res.json({ success: true, results });
     } catch (err) {
         res.status(400).json({ error: err.message });
