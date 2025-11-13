@@ -9,7 +9,6 @@ const POP_SERVERS = [
     { region: "Brazil", url: "https://cdn-brazil-worker.qpert345.workers.dev?target=", coords: [-23.5505, -46.6333] }
 ];
 
-// --- функция для расчёта jitter
 function calculateJitter(latencies) {
     if (!latencies.length) return 0;
     const avg = latencies.reduce((a, b) => a + b, 0) / latencies.length;
@@ -17,7 +16,6 @@ function calculateJitter(latencies) {
     return Math.sqrt(variance);
 }
 
-// --- пинг одного POP с несколькими попытками
 async function pingPOP(regionObj, domain, attempts = 3) {
     const latencies = [];
     let ttfb = null;
@@ -29,7 +27,6 @@ async function pingPOP(regionObj, domain, attempts = 3) {
             const res = await axios.get(regionObj.url + domain, { timeout: 5000 });
             const end = Date.now();
 
-            // fallback на измерение локально, если воркер не вернул latency
             const singleLatency =
                 typeof res.data.latency === "number" && res.data.latency > 0
                     ? Math.round(res.data.latency)
@@ -67,12 +64,10 @@ async function pingPOP(regionObj, domain, attempts = 3) {
 }
 
 
-// --- пинг всех POP параллельно
 async function pingAllPOPs(domain) {
     const promises = POP_SERVERS.map(pop => pingPOP(pop, domain));
     const results = await Promise.all(promises);
 
-    // средние значения по всем успешным POP
     const valid = results.filter(r => r.latency !== null);
     const avgLatency = valid.length ? Math.round(valid.reduce((a,b)=>a+b.latency,0)/valid.length) : null;
     const avgTTFB = valid.length ? Math.round(valid.reduce((a,b)=>a+b.ttfb,0)/valid.length) : null;

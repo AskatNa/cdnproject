@@ -6,7 +6,6 @@ const latencyResultSchema = new mongoose.Schema({
     latency: Number,
     ttfb: Number,
     jitter: Number,
-    //cacheHit: Boolean,
     timestamp: { type: Date, default: Date.now }
 });
 

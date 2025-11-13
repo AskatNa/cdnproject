@@ -12,24 +12,21 @@ exports.runLatencyTest = async (req, res) => {
 
         const results = await testService.runTest(domain, region);
         for (const r of results.results) {
-            if (r.latency) {
                 await LatencyResult.create({
                     domain,
                     region: r.region,
                     latency: r.latency,
                     ttfb: r.ttfb,
                     jitter: r.jitter,
-                    //cacheHit: r.cacheHit
+                    timestamp: new Date()
                 });
             }
-        }
         res.json({ success: true, results });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 };
 
-// 👇 для фронта, чтобы получить регионы и их координаты
 exports.getPOPs = async (req, res) => {
     res.json({ success: true, pops: POP_SERVERS });
 };

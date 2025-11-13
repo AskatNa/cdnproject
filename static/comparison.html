@@ -42,7 +42,7 @@
 <body>
 <nav>
     <div class="brand">🌐 CDN Heatmap Analyzer</div>
-    <div><a href="cdnDashboard.html">Dashboard</a><a href="cdnComparison.html">Comparison</a></div>
+    <div><a href="cdnDashboard.html">Dashboard</a><a href="comparison.html">Comparison</a></div>
 </nav>
 
 <div class="container">
@@ -87,17 +87,26 @@
     let map1,map2,markers1=[],markers2=[];
 
     function getColor(value,type="latency"){
-        if(value==null)return "#B3B3B3";
-        if(type==="latency"||type==="ttfb"){if(value<=100)return "#3AA55B";if(value<=200)return "#EDBD21";return "#EA5B2B";}
-        if(type==="jitter"){if(value<=10)return "#3AA55B";if(value<=30)return "#EDBD21";return "#EA5B2B";}
+        if(value==null) return "#B3B3B3";
+        if(type==="latency"||type==="ttfb"){
+            if(value<=100) return "#3AA55B";
+            if(value<=200) return "#EDBD21";
+            return "#EA5B2B";
+        }
+        if(type==="jitter"){
+            if(value<=10) return "#3AA55B";
+            if(value<=30) return "#EDBD21";
+            return "#EA5B2B";
+        }
         return "#B3B3B3";
     }
 
     function renderMap(map,markers,results,measurement){
         markers.forEach(m=>m.remove());
+        markers.length=0;
         results.forEach(r=>{
             const coords = REGION_COORDS[r.region];
-            if(!coords)return;
+            if(!coords) return;
             const value = r[measurement];
             const color = getColor(value,measurement);
             const marker = L.circleMarker(coords,{radius:8,color,fillColor:color,fillOpacity:0.8})
@@ -111,23 +120,28 @@
         const domain1 = document.getElementById("domain1").value.trim();
         const domain2 = document.getElementById("domain2").value.trim();
         const measurement = document.getElementById("measurement").value;
-        if(!domain1||!domain2){alert("Please enter both domains");return;}
-        document.getElementById("domain1Label").textContent=domain1;
-        document.getElementById("domain2Label").textContent=domain2;
+        if(!domain1||!domain2){alert("Please enter both domains"); return;}
+
+        document.getElementById("domain1Label").textContent = domain1;
+        document.getElementById("domain2Label").textContent = domain2;
 
         const [res1,res2] = await Promise.all([
             fetch("http://localhost:5000/api/tests/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({domain:domain1})}),
             fetch("http://localhost:5000/api/tests/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({domain:domain2})})
         ]);
 
-        const data1=await res1.json();
-        const data2=await res2.json();
+        const data1 = await res1.json();
+        const data2 = await res2.json();
         if(!data1.success||!data2.success){alert("Error fetching data");return;}
 
-        const results1=data1.results.results;
-        const results2=data2.results.results;
-        const avg1=data1.results.avgLatency;
-        const avg2=data2.results.avgLatency;
+        const results1 = data1.results.results;
+        const results2 = data2.results.results;
+
+        const valid1 = results1.filter(r=>r[measurement]!=null);
+        const valid2 = results2.filter(r=>r[measurement]!=null);
+
+        const avg1 = valid1.length ? (valid1.reduce((a,r)=>a+r[measurement],0)/valid1.length).toFixed(2) : "N/A";
+        const avg2 = valid2.length ? (valid2.reduce((a,r)=>a+r[measurement],0)/valid2.length).toFixed(2) : "N/A";
 
         document.getElementById("maps").style.display="flex";
         document.getElementById("summary").style.display="flex";
@@ -139,23 +153,23 @@
         renderMap(map1,markers1,results1,measurement);
         renderMap(map2,markers2,results2,measurement);
 
-        const tbody=document.querySelector("#comparisonTable tbody");
-        tbody.innerHTML="";
+        const tbody = document.querySelector("#comparisonTable tbody");
+        tbody.innerHTML = "";
         results1.forEach(r1=>{
-            const r2=results2.find(r=>r.region===r1.region);
-            if(!r2)return;
-            const val1=r1[measurement]!=null?r1[measurement]+" ms":"N/A";
-            const val2=r2[measurement]!=null?r2[measurement]+" ms":"N/A";
-            const diff=r1[measurement]!=null&&r2[measurement]!=null?Math.abs(r1[measurement]-r2[measurement])+" ms":"N/A";
-            const tr=document.createElement("tr");
-            tr.innerHTML=`<td>${r1.region}</td><td>${val1} ${r1.cacheHit!=null?`(Cache:${r1.cacheHit})`:""}</td>
-    <td>${val2} ${r2.cacheHit!=null?`(Cache:${r2.cacheHit})`:""}</td><td>${diff}</td>`;
+            const r2 = results2.find(r=>r.region===r1.region);
+            if(!r2) return;
+            const val1 = r1[measurement]!=null?r1[measurement]+" ms":"N/A";
+            const val2 = r2[measurement]!=null?r2[measurement]+" ms":"N/A";
+            const diff = r1[measurement]!=null && r2[measurement]!=null ? Math.abs(r1[measurement]-r2[measurement])+" ms":"N/A";
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${r1.region}</td><td>${val1} ${r1.cacheHit!=null?`(Cache:${r1.cacheHit})`:""}</td>
+                        <td>${val2} ${r2.cacheHit!=null?`(Cache:${r2.cacheHit})`:""}</td><td>${diff}</td>`;
             tbody.appendChild(tr);
         });
 
-        document.getElementById("avg1").textContent=avg1+" ms";
-        document.getElementById("avg2").textContent=avg2+" ms";
-        document.getElementById("fasterCDN").textContent=avg1<avg2?domain1:domain2;
+        document.getElementById("avg1").textContent = avg1 + " ms";
+        document.getElementById("avg2").textContent = avg2 + " ms";
+        document.getElementById("fasterCDN").textContent = (avg1!=="N/A" && avg2!=="N/A") ? (parseFloat(avg1)<parseFloat(avg2)?domain1:domain2) : "-";
     }
 </script>
 </body>

@@ -287,14 +287,12 @@
       return;
     }
 
-    const { results, bestRoute, avgLatency,avgTTFB, avgJitter } = data.results;
+    const { results, bestRoute} = data.results;
 
-    // Фильтруем по выбранному региону
     const filtered = selectedRegion === "Global"
             ? results
             : results.filter(r => r.region === selectedRegion);
 
-    // Убираем старые маркеры
     markers.forEach(m => m.remove());
     markers = [];
 
@@ -320,7 +318,6 @@
     const slowestCard = document.getElementById("slowestCard");
 
     if (selectedRegion === "Global") {
-      // Показываем все блоки
       summary.style.display = "flex";
       avgCard.style.display = "block";
       fastestCard.style.display = "block";
@@ -329,11 +326,7 @@
       const valid = results.filter(r => r[measurement] != null);
       const fastest = valid.length ? valid.reduce((a, b) => (a[measurement]<b[measurement]?a:b)) : null;
       const slowest = valid.length ? valid.reduce((a, b) => (a[measurement]>b[measurement]?a:b)) : null;
-      // Берем среднее по выбранной метрике
-      // let avgValue;
-      // if (measurement === "latency") avgValue = avgLatency;
-      // if (measurement === "ttfb") avgValue = avgTTFB;
-      // if (measurement === "jitter") avgValue = avgJitter;
+
       const avgValue = valid.length
               ? Number((valid.reduce((sum, r) => sum + r[measurement], 0) / valid.length).toFixed(2))
               : null;
@@ -347,7 +340,6 @@
               slowest ? `${slowest.region} (${slowest[measurement]} ms)` : "N/A";
 
     } else {
-      // Если выбран один регион, показываем только latency
       summary.style.display = "flex";
       avgCard.style.display = "none";
       fastestCard.style.display = "none";
